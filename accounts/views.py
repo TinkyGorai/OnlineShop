@@ -101,8 +101,7 @@ def cart(request):
       "cart":cart,
       "cartitems":cart_items,
    }
-   if(not cart_items):
-      messages.warning(request,f'Add Products to Cart')
+   
    # for item in cart_items:
    #  print(item.size_variant)
    #  print(item.products.product_images)
@@ -180,7 +179,7 @@ def add_to_cart(request, uid):
             size_variant=size_variant,
             color_variant=color_variant
         )
-        messages.success(request, "Product added to cart successfully!")
+        
 
     return redirect(request.META.get('HTTP_REFERER', 'product:product_list'))  # Redirect back to product page
    
@@ -214,7 +213,6 @@ def create_order(request):
         cart = Cart.objects.filter(user=request.user, is_paid=False).first()
 
         if not cart:
-            messages.error(request, "No active cart found.")
             return redirect("cart_page")
 
         name = request.POST.get("name")
@@ -226,7 +224,6 @@ def create_order(request):
         # Ensure no duplicate order for the same cart
         existing_order = Order.objects.filter(cart=cart).first()
         if existing_order:
-            messages.warning(request, "Order already exists for this cart.")
             return redirect("/")
 
         # Determine payment status
@@ -248,7 +245,6 @@ def create_order(request):
         # If payment is successful, mark cart as paid and delete items
         CartItems.objects.filter(cart=cart).delete()
 
-        messages.success(request, "Order placed successfully!")
 
         if payment_method == "COD":
             return redirect("/")

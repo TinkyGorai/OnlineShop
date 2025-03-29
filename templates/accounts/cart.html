@@ -51,7 +51,7 @@
                   </div>
               </td>
               <td class="text-right">
-               <a href="#" class="wishlist-btn"> <i class="fa fa-heart"></i></a> 
+               <!-- <a href="#" class="wishlist-btn"> <i class="fa fa-heart"></i></a>  -->
                <a href="{% url 'remove_from_cart' item.uid %}" class="remove-btn"> Remove</a>
               </td>
              </tr>
@@ -60,7 +60,7 @@
           </table>
     
         <div class="cart-footer">
-          <button id="rzp-button1" class="btn checkout-btn"> Make Purchase <i class="fa fa-chevron-right"></i> </button>
+          <button id="place-order-btn" class="btn checkout-btn"> Place Order </button>
           <a href="#" class="btn continue-btn"> <i class="fa fa-chevron-left"></i> Continue Shopping </a>
         </div>	
       </div> 
@@ -72,21 +72,6 @@
     </main>
 
     <aside class="cart-summary col-md-3">
-        <div class="coupon-box">
-            <form method="POST">
-              {% include "base/alert.html" %}
-              {% csrf_token %}
-                <label>Have a coupon?</label>
-                <div class="coupon-input">
-                    <input type="text" name="coupon" placeholder="Coupon code">
-                    <button type="submit" class="btn apply-btn">Apply</button>
-                </div>
-                {% if cart.coupon %}
-                <a class="btn remove-coupon" href="{% url 'remove-coupon' cart.uid %}">{{ cart.coupon.coupon_code }}</a>
-                {% endif %}
-            </form>
-        </div> 
-
         <div class="total-box">
             <div class="total-row">
               <span>Total:</span>
@@ -99,79 +84,80 @@
         </div>
     </aside>
   </div>
+
+  <!-- ORDER FORM (Hidden initially) -->
+  <div id="order-form" class="order-form">
+    <h4>Enter Your Details</h4>
+    <form method="POST" action="{% url 'order' %}">
+        {% csrf_token %}
+        <input type="text" name="name" placeholder="Full Name" required>
+        <input type="email" name="email" placeholder="Email Address" required>
+        <input type="text" name="phone" placeholder="Phone Number" required>
+        <textarea name="address" placeholder="Shipping Address" required></textarea>
+
+        <button type="submit" name="payment_method" value="COD" class="btn cod-btn">Cash on Delivery</button>
+        <button type="submit" name="payment_method" value="Online" id="rzp-button1" class="btn online-btn">Pay Now</button>
+    </form>
+  </div>
+
   {% endif %}
  </div>
 </section>
-
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
+  document.getElementById("place-order-btn").addEventListener("click", function() {
+      document.getElementById("order-form").style.display = "block";
+  });
+
   var options = {
-      "key": "rzp_test_jkmzOPacv3Y99Y", // Enter the Key ID generated from the Dashboard
-      "amount": "{{payment.amount}}", // Amount is in currency subunits. Default currency is INR. Hence, 50000 refers to 50000 paise
+      "key": "rzp_test_jkmzOPacv3Y99Y",
+      "amount": "{{payment.amount}}",
       "currency": "INR",
       "name": "Ecomm",
       "description": "Purchase",
       "image": "https://example.com/your_logo",
-      "order_id": "{{payment.id}}", //This is a sample Order ID. Pass the `id` obtained in the response of Step 1
+      "order_id": "{{payment.id}}",
       "handler": function (response){
-          window.location.href=f`http://127.0.0.1:8000/accounts/success/?razorpay_payment_id=${response.razorpay_payment_id}&razorpay_order_id=${response.razorpay_order_id}&razorpay_signature=${response.razorpay_signature}`
+          window.location.href=`http://127.0.0.1:8000/accounts/success/?razorpay_payment_id=${response.razorpay_payment_id}&razorpay_order_id=${response.razorpay_order_id}&razorpay_signature=${response.razorpay_signature}`;
       },
-      
-      "theme": {
-          "color": "#3399cc"
-      }
+      "theme": { "color": "#3399cc" }
   };
+
   var rzp1 = new Razorpay(options);
-  rzp1.on('payment.failed', function (response){
-          alert(response.error.code);
-          alert(response.error.description);
-          alert(response.error.source);
-          alert(response.error.step);
-          alert(response.error.reason);
-          alert(response.error.metadata.order_id);
-          alert(response.error.metadata.payment_id);
-  });
   document.getElementById('rzp-button1').onclick = function(e){
       rzp1.open();
       e.preventDefault();
+  };
+</script>
+<script>
+  function changeQuantity(itemUid, change) {
+      let quantityInput = document.getElementById(`quantity-${itemUid}`);
+      let priceElement = document.getElementById(`price-${itemUid}`);
+      let cartTotalElement = document.getElementById("cartTotal");
+
+      let currentQuantity = parseInt(quantityInput.value);
+      let pricePerUnit = parseFloat(quantityInput.dataset.price);
+
+      let newQuantity = currentQuantity + change;
+      if (newQuantity < 1) return; // Prevent quantity from going below 1
+
+      // Update the input field value
+      quantityInput.value = newQuantity;
+
+      // Update the price for the specific product
+      let newPrice = newQuantity * pricePerUnit;
+      priceElement.textContent = `Rs ${newPrice.toFixed(2)}`;
+
+      // Recalculate and update total cart price dynamically
+      let total = 0;
+      document.querySelectorAll(".quantity-input").forEach(input => {
+          let price = parseFloat(input.dataset.price);
+          let qty = parseInt(input.value);
+          total += price * qty;
+      });
+
+      cartTotalElement.textContent = `Rs ${total.toFixed(2)}`;
   }
-  </script>
-  <script>
-    function changeQuantity(itemId, change) {
-    var quantityInput = document.getElementById("quantity-" + itemId);
-    var priceElement = document.getElementById("price-" + itemId);
-    
-    // Get quantity safely, defaulting to 1 if NaN
-    var quantity = parseInt(quantityInput.value) || 1;
-    var pricePerUnit = parseFloat(quantityInput.getAttribute("data-price")) || 0;
-
-    // Ensure quantity is at least 1
-    quantity = Math.max(1, quantity + change);
-    quantityInput.value = quantity;
-
-    // Update individual product price
-    if (priceElement) {
-        priceElement.innerText = `$${(quantity * pricePerUnit).toFixed(2)}`;
-    }
-
-    updateCartTotal();
-}
-
-function updateCartTotal() {
-    var total = 0;
-    document.querySelectorAll(".price").forEach(function (priceElement) {
-        var price = parseFloat(priceElement.innerText.replace("$", "")) || 0;
-        total += price;
-    });
-
-    var cartTotalElement = document.getElementById("cartTotal");
-    if (cartTotalElement) {
-        cartTotalElement.innerText = `$${total.toFixed(2)}`;
-    }
-}
-
-    </script>
-    
-
+</script>
 
 {% endblock %}

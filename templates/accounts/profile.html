@@ -1,7 +1,6 @@
 {% extends "base/base.html" %}
 {% block content %}
 <section class="profile-section">
-
     <div class="profile-box">
         <div class="profile-content">
             <h4 class="profile-title">My Profile</h4>
@@ -19,5 +18,33 @@
         </div>
     </div>
 
+    <!-- Order History Section -->
+    <div class="order-history">
+        <h4 class="profile-title">Order History</h4>
+        {% if orders %}
+            <table class="order-table">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th>Total Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                        <tr>
+                            <td>{{ order.id }}</td>
+                            <td>{{ order.created_at|date }}</td>
+                            <td>{{ order.order_status }}</td>
+                            <td>Rs {{ order.total}}/-</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No orders found.</p>
+        {% endif %}
+    </div>
 </section>
 {% endblock %}

@@ -67,19 +67,26 @@ def logout_page(request):
     return redirect("/")  # Redirect to home or login page
 
 def profile_page(request):
-   user=request.user
-   if not user.is_authenticated:
-      messages.warning(request,'First Login')
-      return render(request,'accounts/login.html')
-   else:
-      user_obj=User.objects.get(username=user.username)
-      profile_obj=Profile.objects.get(user=user_obj)
-      context={
-         'user':user_obj,
-         'profile':profile_obj,
-         'cart_count':profile_obj.get_cart_count(),
-      }
-      return render(request,'accounts/profile.html',context)
+    user = request.user
+    if not user.is_authenticated:
+        messages.warning(request, 'First Login')
+        return render(request, 'accounts/login.html')
+
+    user_obj = User.objects.get(username=user.username)
+    profile_obj = Profile.objects.get(user=user_obj)
+
+    # Fetch order history using cart's user instead of ordered_by
+    orders = Order.objects.filter(cart__user=user_obj).order_by('-created_at')
+
+    context = {
+        'user': user_obj,
+        'profile': profile_obj,
+        'cart_count': profile_obj.get_cart_count(),
+        'orders': orders,  # Pass orders to template
+    }
+    return render(request, 'accounts/profile.html', context)
+
+
       
 
 def cart(request):
@@ -125,14 +132,12 @@ def cart(request):
          messages.success(request,'Coupon Applied')
          cart.coupon=coupon_obj[0]
          cart.save()
+   payment=None
    if(cart_items):
       client=razorpay.Client(auth=(settings.KEY_ID,settings.KEY_SECRET))
       payment=client.order.create({'amount':cart.get_cart_total()*100,'currency':'INR','payment_capture':1})
       cart.razor_pay_order_id=payment['id']
       cart.save()
-   
-   
-   payment=None
    context['payment']=payment
    return render(request,'accounts/cart.html',context)
 
@@ -198,4 +203,56 @@ def success(request):
    cart=Cart.objects.get(razor_pay_order_id=order_id)
    cart.is_paid(True)
    cart.save()
-   return Httpresponse('Payment Success')
+   return HttpResponse('Payment Success')
+
+from django.shortcuts import render, redirect
+from .models import Order, Cart
+from django.contrib.auth.decorators import login_required
+@login_required
+def create_order(request):
+    if request.method == "POST":
+        cart = Cart.objects.filter(user=request.user, is_paid=False).first()
+
+        if not cart:
+            messages.error(request, "No active cart found.")
+            return redirect("cart_page")
+
+        name = request.POST.get("name")
+        email = request.POST.get("email")
+        phone = request.POST.get("phone")
+        address = request.POST.get("address")
+        payment_method = request.POST.get("payment_method")
+
+        # Ensure no duplicate order for the same cart
+        existing_order = Order.objects.filter(cart=cart).first()
+        if existing_order:
+            messages.warning(request, "Order already exists for this cart.")
+            return redirect("/")
+
+        # Determine payment status
+        is_paid = False if payment_method == "COD" else True
+
+        order = Order.objects.create(
+            cart=cart,
+            ordered_by=name,
+            shipping_address=address,
+            mobile=phone,
+            email=email,
+            subtotal=cart.get_cart_total(),
+            discount=cart.coupon.discount if cart.coupon else 0,
+            total=cart.get_cart_total(),
+            order_status="Order Received",
+            is_paid=is_paid  # Set payment status based on method
+        )
+
+        # If payment is successful, mark cart as paid and delete items
+        CartItems.objects.filter(cart=cart).delete()
+
+        messages.success(request, "Order placed successfully!")
+
+        if payment_method == "COD":
+            return redirect("/")
+
+        return redirect("payment_gateway")
+
+    return redirect("cart_page")

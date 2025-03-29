@@ -7,6 +7,7 @@ from .models import Profile,Cart,CartItems,Coupon
 from products.models import Product,ProductColorVariant,ProductSizeVariant
 import razorpay
 from django.conf import settings
+from django.contrib.auth.decorators import login_required
 # Create your views here.
 def login_page(request):
     print(f'request: {request.POST}')
@@ -56,8 +57,7 @@ def register_page(request):
            user_obj.set_password(password)
            user_obj.save()
            print(messages)
-           messages.success(request,'A email has been to your mail')
-           return HttpResponseRedirect(request.path_info)
+           return render(request, 'accounts/login.html')
 
     return render(request,'accounts/register.html')
 
@@ -144,7 +144,7 @@ def cart(request):
 from django.shortcuts import get_object_or_404, redirect
 from django.contrib import messages
 from .models import Product, Cart, CartItems, ProductSizeVariant, ProductColorVariant
-
+@login_required
 def add_to_cart(request, uid):
     user = request.user
     product = get_object_or_404(Product, uid=uid)

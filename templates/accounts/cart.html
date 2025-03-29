@@ -47,7 +47,7 @@
               </td>
               <td>
                   <div class="price-box"> 
-                      <span id="price-{{ item.uid }}" class="price">${{ item.get_product_price }}.00</span> 
+                      <span id="price-{{ item.uid }}" class="price">RS {{ item.get_product_price }}.00/-</span> 
                   </div>
               </td>
               <td class="text-right">
@@ -75,7 +75,7 @@
         <div class="total-box">
             <div class="total-row">
               <span>Total:</span>
-              <strong id="cartTotal">${{ cart.get_cart_total }}</strong>
+              <strong id="cartTotal">Rs {{ cart.get_cart_total }}/-</strong>
             </div>
             <hr>
             <p class="payment-options">

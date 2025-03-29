@@ -36,6 +36,7 @@ def product_detail(request, slug):
             'size_variants': product.product_sizes.all(),
             'product_images': product.product_colors.filter(color=selected_color),  # Images for selected color
             'final_price': final_price,
+            'payment':final_price*100
         }
         
         return render(request, 'product/product.html', context)

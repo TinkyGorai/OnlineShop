@@ -6,7 +6,8 @@
 
     <title>BazaarNest - Online Shopping</title>
 
-    <link href="/media/fonts/fontawesome/css/all.min.css" type="text/css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+
     <link href="/media/css/style.css" rel="stylesheet" type="text/css"/> <!-- Updated CSS file -->
 
 </head>
@@ -33,13 +34,19 @@
                     <i class="fa fa-shopping-cart"></i>
                     <span class="cart-count">{{ request.user.profile.get_cart_count }}</span>
                 </a>
+                {% if user.is_authenticated %}
+                <!-- If logged in, show profile and logout -->
                 <a href="{% url 'profile' %}" class="user-icon">
                     <i class="fa fa-user"></i>
                 </a>
+                <a href="{% url 'logout' %}" class="auth-links">Logout</a>
+            {% else %}
+                <!-- If not logged in, show login and register -->
                 <div class="auth-links">
                     <a href="{% url 'login' %}">Sign in</a> |  
                     <a href="{% url 'register' %}"> Register</a>
                 </div>
+            {% endif %}
             </div>
         </div>
     </section>

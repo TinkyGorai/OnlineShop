@@ -1,26 +1,19 @@
 from django.contrib import admin
-from .models import Category
-from .models import Product
-from .models import ProductImage,SizeVariant,ColorVariant
+from .models import Product,ProductSizeVariant, ProductColorVariant, Category
 
 
-# Register your models here.
-class ProductImageAdmin(admin.StackedInline):
-    model=ProductImage
-@admin.register(SizeVariant)
-class SizevariantAdmin(admin.ModelAdmin):
-    list_display=['size','price']
-    model=SizeVariant
-@admin.register(ColorVariant)
-class ColorvariantAdmin(admin.ModelAdmin):
-    list_display=['color','price']
-    model=ColorVariant
+
+class ProductSizeVariantInline(admin.TabularInline):
+    model = ProductSizeVariant
+    extra = 1  # Allows adding new variants easily
+
+class ProductColorVariantInline(admin.TabularInline):
+    model = ProductColorVariant
+    extra = 1
+    
 
 class ProductAdmin(admin.ModelAdmin):
-    list_display=['product_name','price']
-    inlines=[ProductImageAdmin]
-
-
-
+    list_display = ('product_name', 'base_price', 'category', 'brand', 'availability')
+    inlines = [ProductSizeVariantInline,ProductColorVariantInline]
+admin.site.register(Product, ProductAdmin)
 admin.site.register(Category)
-admin.site.register(Product,ProductAdmin)

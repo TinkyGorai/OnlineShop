@@ -1,0 +1,23 @@
+{% extends "base/base.html" %}
+{% block content %}
+<section class="profile-section">
+
+    <div class="profile-box">
+        <div class="profile-content">
+            <h4 class="profile-title">My Profile</h4>
+            <form method="POST">
+                {% csrf_token %}
+                {% include "base/alert.html" %}
+
+                <div class="info-group"><strong>Username:</strong> {{ user.username }}</div>
+                <div class="info-group"><strong>First Name:</strong> {{ user.first_name }}</div>
+                <div class="info-group"><strong>Last Name:</strong> {{ user.last_name }}</div>
+                <div class="info-group"><strong>Email:</strong> {{ user.email }}</div>
+
+                <button type="submit" class="btn-edit">Edit</button>
+            </form>
+        </div>
+    </div>
+
+</section>
+{% endblock %}

@@ -1,130 +1,87 @@
 {% extends 'base/base.html' %}
 {% block content %}
 
+<section class="product-section">
+    <div class="container">
+        <div class="product-card">
+            <!-- Product Images -->
+            <aside class="product-gallery">
+                <div class="img-big-wrap">
+                    {% if product_images %}
+                        <img id="mainImage" src="{{ product_images.0.image.url }}" alt="{{ selected_color }}">
+                    {% else %}
+                        <img id="mainImage" src="/media/default-image.jpg" alt="Default Image">
+                    {% endif %}
+                </div>
 
+                <div class="thumbs-wrap">
+                    {% for image in product_images %}
+                        <a href="#" class="item-thumb" onclick="changeMainImage('{{ image.image.url }}')">
+                            <img src="{{ image.image.url }}" alt="{{ selected_color }}">
+                        </a>
+                    {% endfor %}
+                </div>
+            </aside>
 
+            <!-- Product Details -->
+            <main class="product-info">
+                <h2>{{product.product_name}}</h2>
 
-<section class="section-content padding-y bg">
-  <div class="container">
-  
-  <!-- ============================ COMPONENT 1 ================================= -->
-  <div class="card">
-    <div class="row no-gutters">
-      <aside class="col-md-6">
-  <article class="gallery-wrap"> 
-  <div class="img-big-wrap">
-    <div> <a href=""><img src="/media/{{product.product_images.first.image}}"></a></div>
-  </div> <!-- slider-product.// -->
-  <div class="thumbs-wrap">
-    {% for image in product.product_images.all %}
-    <a href="#" class="item-thumb"> <img src="/media/{{image.image}}"></a>
-    {% endfor %}
-  </div> <!-- slider-nav.// -->
-  </article> <!-- gallery-wrap .end// -->
-      </aside>
-      <main class="col-md-6 border-left">
-  <article class="content-body">
-  
-  <h2 class="title">{{product.product_name}}</h2>
-  
-  <div class="rating-wrap my-3">
-    <ul class="rating-stars">
-      <li style="width:80%" class="stars-active"> 
-        <i class="fa fa-star"></i> <i class="fa fa-star"></i> 
-        <i class="fa fa-star"></i> <i class="fa fa-star"></i> 
-        <i class="fa fa-star"></i> 
-      </li>
-      <li>
-        <i class="fa fa-star"></i> <i class="fa fa-star"></i> 
-        <i class="fa fa-star"></i> <i class="fa fa-star"></i> 
-        <i class="fa fa-star"></i> 
-      </li>
-    </ul>
-    <small class="label-rating text-muted">132 reviews</small>
-    <small class="label-rating text-success"> <i class="fa fa-clipboard-check"></i> 154 orders </small>
-  </div> <!-- rating-wrap.// -->
-  
-  <div class="mb-3"> 
-    <var class="price h4">${% if updated_price %}
-      {{updated_price}} {% else%}{{ product.price }} {% endif %}.00</var> 
-    <span class="text-muted">/per kg</span> 
-  </div> <!-- price-detail-wrap .// -->
-  
-  <p>{{product.product_description}}</p>
-  
-  
-  <dl class="row">
-    <dt class="col-sm-3">Model#</dt>
-    <dd class="col-sm-9">Odsy-1000</dd>
-  
-    <dt class="col-sm-3">Color</dt>
-    <dd class="col-sm-9">Brown</dd>
-  
-    <dt class="col-sm-3">Delivery</dt>
-    <dd class="col-sm-9">Russia, USA, and Europe </dd>
-  </dl>
-  
-  <hr>
-    <div class="form-row">
-      <div class="form-group col-md flex-grow-0">
-        <label>Quantity</label>
-        <div class="input-group mb-3 input-spinner">
-          <div class="input-group-prepend">
-          <button class="btn btn-light" type="button" id="button-plus"> + </button>
-          </div>
-          <input type="text" class="form-control" value="1">
-          <div class="input-group-append">
-          <button class="btn btn-light" type="button" id="button-minus"> − </button>
-          </div>
+                <div class="rating-wrap">
+                    <div class="stars">
+                        ★★★★☆ (132 reviews)
+                    </div>
+                    <small class="orders">✔ 154 orders</small>
+                </div>
+
+                <div class="price">{{final_price}}.00</div>
+                <p>{{product.product_description}}</p>
+
+                <label>Select Color:</label>
+                <select id="colorSelect" onchange="changeColor(this.value)">
+                    {% for color in color_variants %}
+                        <option value="{{color}}" {% if selected_color == color %}selected{% endif %}>
+                            {{ color }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <label>Select Size:</label>
+                <select id="sizeSelect" onchange="change_price(this.value)">
+                    {% for size in size_variants %}
+                        <option value="{{ size.size }}" {% if selected_size == size.size %}selected{% endif %}>
+                            {{ size.size }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <div class="buttons">
+                    <a href="#" class="buy-btn">Buy Now</a>
+                    <a href="{% url 'add_to_cart' product.uid %}?size={{ selected_size }}&color={{ selected_color }}" class="cart-btn">
+                        Add to Cart 🛒
+                    </a>
+                </div>
+            </main>
         </div>
-      </div> <!-- col.// -->
-      {% if product.size_variant.count %}
-      <div class="form-group col-md">
-          <label>Select size</label>
-          <div class="mt-1">
-            {% for size_var in product.size_variant.all %}
-            <label class="custom-control custom-radio custom-control-inline">
-              <input type="radio" onchange="change_price('{{size_var.size}}')" name="select_size"  {% ifequal select_size size_var.size %} checked="checked" {% endifequal %} class="custom-control-input">
-              <div class="custom-control-label">{{size_var.size}}</div>
-            </label>
-            {% endfor %}
-  
-          </div>
-          {% endif %}
-      </div> <!-- col.// -->
-    </div> <!-- row.// -->
-  
-    <a href="#" class="btn  btn-primary"> Buy now </a>
-    <a href="{% url 'add_to_cart' product.uid %}?variant={{select_size}}" class="btn  btn-outline-primary"> <span class="text">Add to cart</span> <i class="fas fa-shopping-cart"></i>  </a>
-  </article> <!-- product-info-aside .// -->
-      </main> <!-- col.// -->
-    </div> <!-- row.// -->
-  </div> <!-- card.// -->
-  <!-- ============================ COMPONENT 1 END .// ================================= -->
-  
+    </div>
+</section>
 
-  </div>
-  </section>
-    <script>
-      function change_price(size){
-        window.location.href=window.location.pathname+`?size=${size}`
-      }
-    </script>
+<script>
+    function changeColor(color) {
+        let url = new URL(window.location.href);
+        url.searchParams.set('color', color);
+        window.location.href = url.toString();
+    }
+
+    function change_price(size) {
+        let url = new URL(window.location.href);
+        url.searchParams.set('size', size);
+        window.location.href = url.toString();
+    }
+
+    function changeMainImage(imageUrl) {
+        document.getElementById("mainImage").src = imageUrl;
+    }
+</script>
+
 {% endblock %}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    

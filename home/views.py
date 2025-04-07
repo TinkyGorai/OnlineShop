@@ -52,3 +52,12 @@ def Product_list(request, category_slug):
         'availability': availability,
     }
     return render(request, 'product/productlist.html', context)
+
+def product_search(request):
+    query = request.GET.get('q', '')
+    products = Product.objects.filter(product_name__icontains=query)
+    context = {
+        'products': products,
+        'query': query,
+    }
+    return render(request, 'product/product_search.html', context)  

@@ -40,10 +40,8 @@ class Cart(BaseModel):
         total_price = 0
 
         for item in self.cart_items.all():
-            base_price = item.products.base_price if item.products else 0
-            size_price = item.size_variant.additional_price if item.size_variant else 0
-            color_price = item.color_variant.additional_price if item.color_variant else 0
-            total_price += base_price + size_price + color_price
+            price = item.get_product_price()
+            total_price += price
 
         # Apply coupon discount if applicable
         if self.coupon and total_price >= self.coupon.minimum_amount:
@@ -60,12 +58,12 @@ class CartItems(BaseModel):
     products = models.ForeignKey(Product, on_delete=models.SET_NULL, blank=True, null=True)
     size_variant = models.ForeignKey(ProductSizeVariant, on_delete=models.SET_NULL, blank=True, null=True)
     color_variant = models.ForeignKey(ProductColorVariant, on_delete=models.SET_NULL, blank=True, null=True)
-
+    quantity = models.PositiveIntegerField(default=1)
     def get_product_price(self):
         base_price = self.products.base_price if self.products else 0
         size_price = self.size_variant.additional_price if self.size_variant else 0
         color_price = self.color_variant.additional_price if self.color_variant else 0
-        return base_price + size_price + color_price
+        return (base_price + size_price + color_price) * self.quantity
 
 # Signals for user profile & cart creation
 @receiver(post_save, sender=User)
@@ -89,7 +87,7 @@ ORDER_STATUS = [
 ]
 
 class Order(models.Model):
-    cart = models.OneToOneField(Cart, on_delete=models.CASCADE)
+    cart = models.ForeignKey(Cart, on_delete=models.CASCADE)
     ordered_by = models.CharField(max_length=200)
     shipping_address = models.CharField(max_length=200)
     mobile = models.CharField(max_length=10)
@@ -99,6 +97,19 @@ class Order(models.Model):
     total = models.PositiveIntegerField()
     order_status = models.CharField(max_length=50, choices=ORDER_STATUS)
     created_at = models.DateTimeField(auto_now_add=True)
-    is_paid=models.BooleanField(default=False)
+    is_paid = models.BooleanField(default=False)
+
     def __str__(self):
         return f"Order: {self.id}"
+
+
+class OrderItem(models.Model):
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="order_items")
+    product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
+    size_variant = models.ForeignKey(ProductSizeVariant, on_delete=models.SET_NULL, null=True, blank=True)
+    color_variant = models.ForeignKey(ProductColorVariant, on_delete=models.SET_NULL, null=True, blank=True)
+    quantity = models.PositiveIntegerField(default=1)
+    price = models.PositiveIntegerField()
+
+    def __str__(self):
+        return f"OrderItem: {self.product.product_name} (Order ID: {self.order.id})"

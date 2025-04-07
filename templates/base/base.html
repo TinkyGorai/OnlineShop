@@ -22,8 +22,8 @@
             
             <!-- Search Bar -->
             <div class="search-box">
-                <form action="#" class="search-form">
-                    <input type="text" name="q" placeholder="Search for products">
+                <form method="get" action="{% url 'product_search' %}" class="search-form">
+                    <input type="text" value="{{ query }}" name="q" placeholder="Search for products">
                     <button type="submit"><i class="fa fa-search"></i></button>
                 </form>
             </div>
